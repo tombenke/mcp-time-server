@@ -32,22 +32,39 @@ jobs:
 
       - name: Go environment
         run: |
+          pwd
           go env GOMOD
           go env GOPATH
 
+      - name: Locate module root
+        run: |
+          if [ -f go.mod ]; then
+            echo "MODULE_DIR=$PWD" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          modfile=$(find . -maxdepth 4 -name go.mod | head -n 1)
+          if [ -z "$modfile" ]; then
+            echo "go.mod not found in repository checkout"
+            exit 1
+          fi
+
+          module_dir=$(cd "$(dirname "$modfile")" && pwd)
+          echo "MODULE_DIR=$module_dir" >> "$GITHUB_ENV"
+
       - name: Download modules
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           go mod download
 
       - name: Verify modules
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           go mod verify
 
       - name: Check formatting
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           files=$(gofmt -l .)
           if [ -n "$files" ]; then
             echo "The following files are not gofmt-formatted:"
@@ -57,20 +74,20 @@ jobs:
 
       - name: Vet
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           go vet ./...
 
       - name: Build
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           go build ./...
 
       - name: Unit tests
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           go test ./...
 
       - name: Integration tests
         run: |
-          cd "$(dirname "$(go env GOMOD)")"
+          cd "$MODULE_DIR"
           go test -tags=integration ./test/integration/...
