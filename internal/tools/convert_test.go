@@ -6,58 +6,58 @@ import (
 
 func TestConvert(t *testing.T) {
 	tests := []struct {
-		name          string
-		timestamp     string
-		fromTZ        string
-		toTZ          string
-		format        string
-		wantError     bool
-		wantFields    []string
+		name       string
+		timestamp  string
+		fromTZ     string
+		toTZ       string
+		format     string
+		wantError  bool
+		wantFields []string
 	}{
 		{
-			name:        "Round-trip same zone",
-			timestamp:   "2024-03-17T10:00:00Z",
-			fromTZ:      "UTC",
-			toTZ:        "UTC",
-			format:      "",
-			wantError:   false,
-			wantFields:  []string{"converted_time", "source_timezone", "destination_timezone"},
+			name:       "Round-trip same zone",
+			timestamp:  "2024-03-17T10:00:00Z",
+			fromTZ:     "UTC",
+			toTZ:       "UTC",
+			format:     "",
+			wantError:  false,
+			wantFields: []string{"converted_time", "source_timezone", "destination_timezone"},
 		},
 		{
-			name:        "Cross-zone conversion",
-			timestamp:   "2024-03-17T10:00:00Z",
-			fromTZ:      "UTC",
-			toTZ:        "America/New_York",
-			format:      "",
-			wantError:   false,
-			wantFields:  []string{"converted_time", "source_timezone", "destination_timezone"},
+			name:       "Cross-zone conversion",
+			timestamp:  "2024-03-17T10:00:00Z",
+			fromTZ:     "UTC",
+			toTZ:       "America/New_York",
+			format:     "",
+			wantError:  false,
+			wantFields: []string{"converted_time", "source_timezone", "destination_timezone"},
 		},
 		{
-			name:        "Invalid from-zone",
-			timestamp:   "2024-03-17T10:00:00Z",
-			fromTZ:      "Invalid/Zone",
-			toTZ:        "UTC",
-			format:      "",
-			wantError:   true,
-			wantFields:  []string{},
+			name:       "Invalid from-zone",
+			timestamp:  "2024-03-17T10:00:00Z",
+			fromTZ:     "Invalid/Zone",
+			toTZ:       "UTC",
+			format:     "",
+			wantError:  true,
+			wantFields: []string{},
 		},
 		{
-			name:        "Invalid to-zone",
-			timestamp:   "2024-03-17T10:00:00Z",
-			fromTZ:      "UTC",
-			toTZ:        "Invalid/Zone",
-			format:      "",
-			wantError:   true,
-			wantFields:  []string{},
+			name:       "Invalid to-zone",
+			timestamp:  "2024-03-17T10:00:00Z",
+			fromTZ:     "UTC",
+			toTZ:       "Invalid/Zone",
+			format:     "",
+			wantError:  true,
+			wantFields: []string{},
 		},
 		{
-			name:        "Malformed timestamp",
-			timestamp:   "not-a-timestamp",
-			fromTZ:      "UTC",
-			toTZ:        "UTC",
-			format:      "",
-			wantError:   true,
-			wantFields:  []string{},
+			name:       "Malformed timestamp",
+			timestamp:  "not-a-timestamp",
+			fromTZ:     "UTC",
+			toTZ:       "UTC",
+			format:     "",
+			wantError:  true,
+			wantFields: []string{},
 		},
 	}
 

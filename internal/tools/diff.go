@@ -45,12 +45,12 @@ func Diff(startTimestamp, endTimestamp string) (map[string]any, error) {
 	}
 
 	result := map[string]any{
-		"seconds":      seconds,
-		"minutes":      minutes,
-		"hours":        hours,
-		"abs_seconds":  absSeconds,
-		"abs_minutes":  absMinutes,
-		"abs_hours":    absHours,
+		"seconds":     seconds,
+		"minutes":     minutes,
+		"hours":       hours,
+		"abs_seconds": absSeconds,
+		"abs_minutes": absMinutes,
+		"abs_hours":   absHours,
 	}
 
 	return result, nil

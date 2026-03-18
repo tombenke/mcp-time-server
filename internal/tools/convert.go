@@ -44,10 +44,10 @@ func Convert(timestamp, fromTimezone, toTimezone, format string) (map[string]any
 	converted := src.In(toLoc)
 
 	result := map[string]any{
-		"converted_time":         converted.Format(time.RFC3339),
-		"source_timezone":        fromTimezone,
-		"destination_timezone":   toTimezone,
-		"offset_delta_seconds":   offsetDelta,
+		"converted_time":       converted.Format(time.RFC3339),
+		"source_timezone":      fromTimezone,
+		"destination_timezone": toTimezone,
+		"offset_delta_seconds": offsetDelta,
 	}
 
 	return result, nil

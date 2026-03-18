@@ -6,13 +6,13 @@ import (
 
 func TestDiff(t *testing.T) {
 	tests := []struct {
-		name          string
-		startTS       string
-		endTS         string
-		wantError     bool
-		wantFields    []string
-		validateSign  bool // If true, check that seconds field has expected sign
-		wantPositive  bool // Expected sign if validateSign is true
+		name         string
+		startTS      string
+		endTS        string
+		wantError    bool
+		wantFields   []string
+		validateSign bool // If true, check that seconds field has expected sign
+		wantPositive bool // Expected sign if validateSign is true
 	}{
 		{
 			name:         "Positive diff",
