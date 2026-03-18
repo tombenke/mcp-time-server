@@ -1,0 +1,64 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "phase1-setup",
+			"type": "shell",
+			"command": "mkdir -p cmd/server internal/tools internal/prompts internal/server internal/transport && \necho 'package main\n\nimport (\n\t\"flag\"\n\t\"fmt\"\n)\n\nfunc main() {\n\ttransportFlag := flag.String(\"transport\", \"stdio\", \"Transport type: stdio, sse, or http\")\n\tflag.Parse()\n\tfmt.Printf(\"Transport: %s\\\\n\", *transportFlag)\n}\n' > cmd/server/main.go && \necho 'package tools\n' > internal/tools/tools.go && \necho 'package prompts\n' > internal/prompts/prompts.go && \necho 'package server\n' > internal/server/server.go && \necho 'package transport\n' > internal/transport/transport.go && \necho 'Files created successfully'"
+		},
+		{
+			"label": "phase1-scaffold",
+			"type": "shell",
+			"command": "sh",
+			"args": [
+				"-c",
+				"mkdir -p cmd/server internal/tools internal/prompts internal/server internal/transport && touch cmd/server/main.go internal/tools/tools.go internal/prompts/prompts.go internal/server/server.go internal/transport/transport.go && echo 'Phase 1 scaffolding complete'"
+			]
+		},
+		{
+			"label": "phase1-init",
+			"type": "shell",
+			"command": "sh",
+			"args": [
+				"-c",
+				"set -e && mkdir -p cmd/server internal/tools internal/prompts internal/server internal/transport && ls -la"
+			]
+		},
+		{
+			"label": "health-check",
+			"type": "shell",
+			"command": "sh",
+			"args": [
+				"-c",
+				"echo '== go mod tidy ==' && go mod tidy && echo '== go build ./... ==' && go build ./... && echo '== go test ./... ==' && go test ./..."
+			]
+		},
+		{
+			"label": "check-prompts",
+			"type": "shell",
+			"command": "go",
+			"args": [
+				"test",
+				"./internal/prompts"
+			]
+		},
+		{
+			"label": "healthcheck-to-file",
+			"type": "shell",
+			"command": "sh",
+			"args": [
+				"-c",
+				"(go mod tidy && go build ./... && go test ./...) > .healthcheck.txt 2>&1; echo $? > .healthcheck.code"
+			]
+		},
+		{
+			"label": "healthcheck-to-file-rerun",
+			"type": "shell",
+			"command": "sh",
+			"args": [
+				"-c",
+				"(go mod tidy && go build ./... && go test ./...) > .healthcheck.txt 2>&1; echo $? > .healthcheck.code"
+			]
+		}
+	]
+}
