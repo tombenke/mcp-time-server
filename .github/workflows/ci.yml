@@ -26,8 +26,11 @@ jobs:
       - name: Go version
         run: go version
 
+      - name: Download modules
+        run: go mod download
+
       - name: Verify modules
-        run: go mod tidy
+        run: go mod verify
 
       - name: Check formatting
         run: |
