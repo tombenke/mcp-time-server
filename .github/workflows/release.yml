@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+env:
+  GITHUB_IMAGE_REGISTRY: ghcr.io
+  # This is actually not working as intended. Inputs should be read with ${{ inputs.image_name }}
+  # I'm too afraid to fix this, because something will surely break
+  IMAGE_NAME: ${{ github.event.inputs.image_name && github.event.inputs.image_name || github.repository }}
+
+jobs:
+  release:
+    name: Run Continuous Integration workflow
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.21"
+
+      - name: Set up task tool
+        uses: arduino/setup-task@v1
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Task install
+        run: task install-on-ci
+
+      - name: Task lint
+        run: task lint
+
+      - name: Task test
+        run: task test
+
+      - name: Task build
+        run: task build
+
+      - name: Lint Dockerfile
+        run: task lint-dockerfile
+
+      - name: Docker Login to GitHub Packages
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ${{ env.GITHUB_IMAGE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5.6.1
+        with:
+          images: |
+            ${{ env.GITHUB_IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=true
+          tags: |
+            type=semver,pattern={{major}}.{{minor}}.{{patch}}
+            type=sha
+
+      - name: Build container images
+        uses: docker/build-push-action@v6.10.0
+        with:
+          context: .
+          push: false
+          load: true
+          file: ${{ inputs.dockerfile_path }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REPO_PULL=${{ secrets.REPO_PULL }}
+
+      - name: Run integration tests using the container
+        run: task test-int-on-ci
+
+      - name: Run container security workflow
+        uses: lsy-central/lsy-container-security-golden-path@main
+        with:
+          image_registry: ${{ env.GITHUB_IMAGE_REGISTRY }}
+          image_name: ${{ env.IMAGE_NAME }}
+          exit_code: "0"
+
+      - name: Push container images
+        id: push_container_images
+        uses: docker/build-push-action@v6.10.0
+        with:
+          context: .
+          push: true
+          file: ${{ inputs.dockerfile_path }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          build-args: |
+            REPO_PULL=${{ secrets.REPO_PULL }}
+
+#      - name: Run SBOM attestation workflow
+#        uses: lsy-central/lsy-sbom-security-golden-path@main
+#        with:
+#          image_ref: ${{ env.GITHUB_IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push_container_images.outputs.digest }}
+#          cosign-private-key: ${{ secrets.COSIGN_PRIVATE_KEY }}
+#          cosign-public-key: ${{ secrets.COSIGN_PUBLIC_KEY }}

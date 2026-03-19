@@ -1,0 +1,183 @@
+# https://taskfile.dev
+
+version: 3
+
+vars:
+  APPNAME: mcp-time-server
+  DEP: ./...
+  DOCKER_REG_PREFIX: ghcr.io
+  OWNER: tombenke
+  DOCKER_REG_USER: tombenke
+  VERSION:
+    sh: git describe --tags --always  --abbrev=0 --match v* ${GITHUB_REF} | sed -e 's,.*/\(.*\),\1,'  | sed -e 's/^v//' || "latest"
+  IMAGE_TAG: "{{.VERSION}}"
+  DOCKER_IMAGE_NAME: "{{.DOCKER_REG_PREFIX}}/{{.OWNER}}/{{.APPNAME}}:{{.IMAGE_TAG}}"
+  DOCKER_IMAGE_NAME_LATEST: "{{.DOCKER_REG_PREFIX}}/{{.OWNER}}/{{.APPNAME}}:latest"
+
+  GIT_HOOKS_DIR: ./.git/hooks
+
+  LD_FLAGS: "-X 'github.com/tombenke/go-12f-common/buildinfo.appName={{.APPNAME}}' -X 'github.com/tombenke/go-12f-common/buildinfo.version={{.VERSION}}'"
+
+env:
+  GOPRIVATE: github.com/tombenke
+  COMPOSE_FILE: ./deployments/docker-compose.yml
+  COMPOSE_PROJECT_NAME: "{{.APPNAME}}"
+
+dotenv:
+  - .local.env
+  - .secrets
+  - .test.env
+
+tasks:
+  default:
+    desc: Executes all the tests then build the binary.
+    cmds:
+      - task: format
+      - task: lint
+      - task: test
+      - task: build
+      - task: test-int
+
+  pre-commit:
+    desc: Runs the QA tasks from a git pre-commit hook
+    cmds:
+      - task: lint
+      - task: test
+
+  install-on-ci:
+    desc: Install on CI
+    cmds:
+      - sh -c "$(curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh)" -- -b $(go env GOPATH)/bin v2.8.0
+      - go mod tidy
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - task: install-on-ci
+      - task: install-git-hooks
+
+  install-git-hooks:
+    desc: Install git hooks
+    cmds:
+      - mkdir -p {{.GIT_HOOKS_DIR}}
+      - echo -e "#!/bin/bash\ntask pre-commit" > {{.GIT_HOOKS_DIR}}/pre-commit
+      - chmod ug+x {{.GIT_HOOKS_DIR}}/pre-commit
+
+  upgrade:
+    desc: Upgrade packages
+    cmds:
+      - go get -u
+
+  generate:
+    desc: Generate code
+    cmds:
+      - rm -rf ./internal/mocks
+      - go tool github.com/vektra/mockery/v3
+
+  format:
+    desc: Autoformat the source files
+    cmds:
+      - gofmt -w .
+
+  lint:
+    desc: Test gofmt, go vet and go lint
+    cmds:
+      - test -z $(gofmt -d .)
+      - test -z $(go vet ./...)
+      - golangci-lint run
+
+  lint-dockerfile:
+    desc: Lint Dockerfile
+    cmds:
+      - docker run --rm -i -e HADOLINT_VERBOSE=1 hadolint/hadolint < build/Dockerfile
+
+  test:
+    desc: Run all the go tests
+    cmds:
+      - go test -count=1 ./... {{.CLI_ARGS}}
+
+  test-int:
+    desc: Run integration tests
+    cmds:
+      - task: build-docker
+      - task: test-int-on-ci
+
+  test-int-on-ci:
+    desc: Run integration tests on CI
+    cmds:
+      - task: dc-int-upd
+      - go test -count=1 -tags=integration ./test/... {{.CLI_ARGS}}
+      - task: dc-int-down
+
+  benchmark:
+    desc: Run benchmark tests (INACCURATE, run directly from cli!)
+    cmds:
+      - task: dc-upd
+      - go test -bench=.
+      - task: dc-down
+
+  coverage:
+    desc: Open test coverage in browser
+    cmds:
+      - task: dc-int-upd
+      - go test -count=1 -coverprofile=c.out -covermode=atomic -coverpkg github.com/tombenke/mcp-time-server/... -tags=integration ./...
+      - go tool cover -html=c.out
+      - task: dc-int-down
+
+  build:
+    desc: Build the go binary
+    cmds:
+      - go build -ldflags="{{.LD_FLAGS}}" -o main ./cmd
+
+  build-docker:
+    desc: Build docker image
+    cmds:
+      - echo {{.DOCKER_IMAGE_NAME}}
+      - docker build -t {{.DOCKER_IMAGE_NAME}} --build-arg REPO_PULL=$REPO_PULL -f build/Dockerfile .
+      - docker image tag {{.DOCKER_IMAGE_NAME}} {{.DOCKER_IMAGE_NAME_LATEST}}
+
+  docs:
+    desc: Show API docs
+    cmds:
+      - pkgsite -http :8080 & open http://localhost:8080/github.com/tombenke/{{.APPNAME}}
+
+  # Docker test environment related tasks
+  dc-up:
+    desc: Start containers
+    cmds:
+      - docker compose up
+
+  dc-upd:
+    desc: Start containers in the background
+    cmds:
+      - docker compose up --wait
+
+  dc-stop:
+    desc: Stop containers
+    cmds:
+      - docker compose stop
+
+  dc-logs:
+    desc: Get all container logs
+    cmds:
+      - docker compose logs
+
+  dc-logsf:
+    desc: Get all container logs and follow
+    cmds:
+      - docker compose logs -f
+
+  dc-down:
+    desc: Clean up containers
+    cmds:
+      - docker compose down --volumes --remove-orphans
+
+  dc-int-upd:
+    desc: Start docker containers in the background
+    cmds:
+      - docker compose --profile int up --wait
+
+  dc-int-down:
+    desc: Clean up docker containers
+    cmds:
+      - docker compose --profile int down --volumes --remove-orphans

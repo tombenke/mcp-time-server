@@ -27,7 +27,7 @@ func TestStreamableHTTPTransportSmoke(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewStreamableHttpClient() error = %v", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	if err := client.Start(ctx); err != nil {
@@ -70,7 +70,7 @@ func TestSSETransportSmoke(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSSEMCPClient() error = %v", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	if err := client.Start(ctx); err != nil {

@@ -1,0 +1,21 @@
+networks:
+  mcp-time-server-network:
+    driver: bridge
+    name: mcp-time-server-network
+
+services:
+  nats:
+    container_name: mcp-time-server-nats
+    restart: unless-stopped
+    image: nats:2.10.1
+    command: -p 4222 --cluster_name "mcp-time-server-cluster" -m 8222 -js -V -c /custom-config/nats-server.conf
+    ports:
+      - 4222:4222
+      - 6222:6222
+      - 8222:8222
+    volumes:
+      - ../configs/nats-server.conf:/custom-config/nats-server.conf
+    networks:
+      mcp-time-server-network:
+        aliases:
+          - nats

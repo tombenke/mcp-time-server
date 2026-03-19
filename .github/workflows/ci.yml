@@ -1,93 +1,42 @@
-name: Go CI
+name: Continuous Integration
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   pull_request:
-    branches: [master]
+    branches:
+      - master
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-env:
-  GO111MODULE: on
-  GOWORK: off
-
 jobs:
-  test:
+  continuous_integration:
+    name: Run Continuous Integration workflow
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Set up task tool
+        uses: arduino/setup-task@v1
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v2
         with:
-          go-version: "1.25.5"
-          cache: true
+          go-version: "1.25"
 
-      - name: Go version
-        run: go version
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Go environment
-        run: |
-          pwd
-          go env GOMOD
-          go env GOPATH
+      - name: Setup private module access
+        run: git config --global url."https://${{secrets.REPO_PULL}}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
-      - name: Locate module root
-        run: |
-          if [ -f go.mod ]; then
-            echo "MODULE_DIR=$PWD" >> "$GITHUB_ENV"
-            exit 0
-          fi
+      - name: Task install
+        run: task install-on-ci
 
-          modfile=$(find . -maxdepth 4 -name go.mod | head -n 1)
-          if [ -z "$modfile" ]; then
-            echo "go.mod not found in repository checkout"
-            exit 1
-          fi
+      - name: Task lint
+        run: task lint
 
-          module_dir=$(cd "$(dirname "$modfile")" && pwd)
-          echo "MODULE_DIR=$module_dir" >> "$GITHUB_ENV"
+      - name: Task test
+        run: task test
 
-      - name: Download modules
-        run: |
-          cd "$MODULE_DIR"
-          go mod download
-
-      - name: Verify modules
-        run: |
-          cd "$MODULE_DIR"
-          go mod verify
-
-      - name: Check formatting
-        run: |
-          cd "$MODULE_DIR"
-          files=$(gofmt -l .)
-          if [ -n "$files" ]; then
-            echo "The following files are not gofmt-formatted:"
-            echo "$files"
-            exit 1
-          fi
-
-      - name: Vet
-        run: |
-          cd "$MODULE_DIR"
-          go vet ./...
-
-      - name: Build
-        run: |
-          cd "$MODULE_DIR"
-          go build ./...
-
-      - name: Unit tests
-        run: |
-          cd "$MODULE_DIR"
-          go test ./...
-
-      - name: Integration tests
-        run: |
-          cd "$MODULE_DIR"
-          go test -tags=integration ./test/integration/...
+      - name: Task build
+        run: task build

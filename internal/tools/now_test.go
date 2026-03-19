@@ -58,10 +58,11 @@ func TestNow(t *testing.T) {
 					}
 				}
 
-				if expected := tt.tz; expected == "" {
+				expected := tt.tz
+				if expected == "" {
 					expected = "UTC"
 				}
-				if result["timezone"] != (tt.tz) && tt.tz != "" {
+				if result["timezone"] != expected {
 					t.Errorf("Now() timezone = %v, want %v", result["timezone"], tt.tz)
 				}
 			}

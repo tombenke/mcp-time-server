@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -164,52 +162,4 @@ func normalizeListenAddr(addr string) string {
 	}
 
 	return addr
-}
-
-func baseURLFromAddr(addr string) string {
-	addr = strings.TrimSpace(addr)
-	if strings.HasPrefix(addr, "http://") || strings.HasPrefix(addr, "https://") {
-		u, err := url.Parse(strings.TrimSuffix(addr, "/"))
-		if err == nil && u.Host != "" {
-			host, port, splitErr := net.SplitHostPort(u.Host)
-			if splitErr == nil {
-				host = normalizeAdvertisedHost(host)
-				u.Host = net.JoinHostPort(host, port)
-			} else {
-				u.Host = normalizeAdvertisedHost(u.Host)
-			}
-			return u.String()
-		}
-
-		return strings.TrimSuffix(addr, "/")
-	}
-
-	listenAddr := normalizeListenAddr(addr)
-	if strings.HasPrefix(listenAddr, ":") {
-		return "http://localhost" + listenAddr
-	}
-
-	host, port, err := net.SplitHostPort(listenAddr)
-	if err == nil {
-		host = normalizeAdvertisedHost(host)
-		return "http://" + net.JoinHostPort(host, port)
-	}
-
-	host = normalizeAdvertisedHost(listenAddr)
-	if host == "" {
-		host = "localhost"
-	}
-
-	return "http://" + host
-}
-
-func normalizeAdvertisedHost(host string) string {
-	host = strings.TrimSpace(host)
-	host = strings.Trim(host, "[]")
-
-	if host == "" || host == "0.0.0.0" || host == "::" {
-		return "localhost"
-	}
-
-	return host
 }
