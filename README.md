@@ -1,5 +1,7 @@
 # MCP Time Server
 
+[![Actions Status](https://github.com/tombenke/mcp-time-server/workflows/ci/badge.svg)](https://github.com/tombenke/mcp-time-server)
+
 Go-based time and timezone server intended for MCP-style tool and prompt workflows.
 
 ## Features
