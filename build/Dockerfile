@@ -7,8 +7,7 @@ LABEL contact=tombenke@gmail.com
 ENV BINDIR=/usr/local/bin
 
 # Download and install Taskfile
-#SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl -sL https://taskfile.dev/install.sh | /bin/bash
+RUN /bin/bash -o pipefail -c 'curl -sL https://taskfile.dev/install.sh | /bin/bash'
 
 WORKDIR /workdir
 COPY go.mod go.sum ./
