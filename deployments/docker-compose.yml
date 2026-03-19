@@ -4,18 +4,14 @@ networks:
     name: mcp-time-server-network
 
 services:
-  nats:
-    container_name: mcp-time-server-nats
+
+  mcp-time-server:
+    container_name: mcp-time-server
     restart: unless-stopped
-    image: nats:2.10.1
-    command: -p 4222 --cluster_name "mcp-time-server-cluster" -m 8222 -js -V -c /custom-config/nats-server.conf
+    image: ghcr.io/tombenke/mcp-time-server:latest
     ports:
-      - 4222:4222
-      - 6222:6222
-      - 8222:8222
-    volumes:
-      - ../configs/nats-server.conf:/custom-config/nats-server.conf
+      - 8080:8080
     networks:
       mcp-time-server-network:
         aliases:
-          - nats
+          - mcp-time-server

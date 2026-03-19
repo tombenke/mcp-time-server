@@ -127,7 +127,7 @@ tasks:
   build:
     desc: Build the go binary
     cmds:
-      - go build -ldflags="{{.LD_FLAGS}}" -o main ./cmd/server
+      - go build -ldflags="{{.LD_FLAGS}}" -o server ./cmd/server
 
   build-docker:
     desc: Build docker image

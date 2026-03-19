@@ -7,7 +7,7 @@ LABEL contact=tombenke@gmail.com
 ENV BINDIR=/usr/local/bin
 
 # Download and install Taskfile
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+#SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sL https://taskfile.dev/install.sh | /bin/bash
 
 WORKDIR /workdir
@@ -40,8 +40,8 @@ ENV HEALTHCHECK_PORT=8080
 EXPOSE 8080
 
 # Copy assets and binaries
-COPY --from=builder /workdir/main /mcp-time-server
+COPY --from=builder /workdir/server /mcp-time-server
 
 WORKDIR /
 # Start the app
-ENTRYPOINT ["/mcp-time-server"]
+ENTRYPOINT ["/mcp-time-server",  "--transport", "sse", "--addr", "0.0.0.0:8080" ]

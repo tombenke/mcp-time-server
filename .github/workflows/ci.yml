@@ -26,9 +26,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup private module access
-        run: git config --global url."https://${{secrets.REPO_PULL}}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-
       - name: Task install
         run: task install-on-ci
 
