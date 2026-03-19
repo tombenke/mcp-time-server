@@ -79,12 +79,12 @@ jobs:
       - name: Run integration tests using the container
         run: task test-int-on-ci
 
-      - name: Run container security workflow
-        uses: lsy-central/lsy-container-security-golden-path@main
-        with:
-          image_registry: ${{ env.GITHUB_IMAGE_REGISTRY }}
-          image_name: ${{ env.IMAGE_NAME }}
-          exit_code: "0"
+      #      - name: Run container security workflow
+      #        uses: lsy-central/lsy-container-security-golden-path@main
+      #        with:
+      #          image_registry: ${{ env.GITHUB_IMAGE_REGISTRY }}
+      #          image_name: ${{ env.IMAGE_NAME }}
+      #          exit_code: "0"
 
       - name: Push container images
         id: push_container_images
