@@ -15,6 +15,9 @@ jobs:
   release:
     name: Run Continuous Integration workflow
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Setup Go
